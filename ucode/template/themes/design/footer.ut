@@ -1,0 +1,31 @@
+{#
+	Design is a clean HTML5 theme for LuCI. It is based on luci-theme-material and luci-theme-neobird
+
+	luci-theme-material
+		Copyright 2015 Lutty Yang <lutty@wcan.in>
+
+	luci-theme-neobird
+		Copyright 2021 2smile <thinktip@gmail.com>
+
+	luci-theme-bootstrap:
+		Copyright 2008 Steven Barth <steven@midlink.org>
+		Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+		Copyright 2012 David Menting <david@nut-bolt.nl>
+
+	Licensed to the public under the Apache License 2.0
+-#}
+{% if (!blank_page): %}
+			</div>{# .container #}
+			<footer class="mobile-hide">
+				<a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">Powered by {{ version.luciname }} ({{ version.luciversion }})</a>
+				/ {{ version.distname }} {{ version.distversion }}
+				{% if (lua_active): %}/ {{ _('Lua compatibility mode active') }}{% endif %}
+			</footer>
+		</div>{# #maincontent #}
+	</div>{# .main-right #}
+</div>{# .main #}
+
+<script>L.require('menu-design')</script>
+{% endif %}
+</body>
+</html>

@@ -2,13 +2,6 @@
 'require baseclass';
 'require ui';
 
-// 兼容新旧版本 LuCI
-var LuciCompat = {
-	isNewVersion: function() {
-		return L.env.luci_version && parseFloat(L.env.luci_version.split('.')[0]) >= 23;
-	}
-};
-
 return baseclass.extend({
 	__init__: function() {
 		ui.menu.load().then(L.bind(this.render, this));
@@ -20,7 +13,6 @@ return baseclass.extend({
 
 		this.renderModeMenu(node);
 
-		// 兼容新旧版本的 dispatchpath
 		var dispatchpath = L.env.dispatchpath || [];
 		if (dispatchpath.length >= 3) {
 			for (var i = 0; i < 3 && node; i++) {
@@ -65,44 +57,29 @@ return baseclass.extend({
 		var collapse = false;
 
 		document.querySelectorAll('.main .main-left .nav > li >ul.active').forEach(function (ul) {
-			// 兼容无 jQuery 环境
-			if (typeof $ !== 'undefined' && $.fn && $.fn.slideUp) {
-				$(ul).stop(true).slideUp("fast", function () {
-					ul.classList.remove('active');
-					if (ul.previousElementSibling)
-						ul.previousElementSibling.classList.remove('active');
-				});
-			} else {
-				ul.style.display = 'none';
-				ul.classList.remove('active');
-				if (ul.previousElementSibling)
-					ul.previousElementSibling.classList.remove('active');
-			}
-			
-			if (!collapse && ul === slide_menu) {
+			ul.style.display = 'none';
+			ul.classList.remove('active');
+
+			if (ul.previousElementSibling)
+				ul.previousElementSibling.classList.remove('active');
+
+			if (!collapse && ul === slide_menu)
 				collapse = true;
-			}
 		});
 
 		if (!slide_menu)
 			return;
-		
+
 		if (!collapse) {
-			if (typeof $ !== 'undefined' && $.fn && $.fn.slideDown) {
-				$(slide).find(".slide-menu").slideDown("fast", function(){
-					slide_menu.classList.add('active');
-					a.classList.add('active');
-				});
-			} else {
-				var slideMenus = slide.querySelectorAll('.slide-menu');
-				slideMenus.forEach(function(menu) {
-					menu.style.display = 'block';
-				});
-				slide_menu.classList.add('active');
-				a.classList.add('active');
-			}
+			slide.querySelectorAll('.slide-menu').forEach(function(menu) {
+				menu.style.display = 'block';
+			});
+
+			slide_menu.classList.add('active');
+			a.classList.add('active');
 			a.blur();
 		}
+
 		ev.preventDefault();
 		ev.stopPropagation();
 	},
@@ -152,10 +129,8 @@ return baseclass.extend({
 		if (!ul) return;
 		
 		var children = ui.menu.getChildren(tree);
-
-		// 兼容新旧版本的 requestpath
 		var requestpath = L.env.requestpath || [];
-		
+
 		for (var i = 0; i < children.length; i++) {
 			var isActive = (requestpath.length ? children[i].name == requestpath[0] : i == 0);
 
@@ -234,13 +209,8 @@ return baseclass.extend({
 		mainRight.style['overflow-y'] = open ? 'auto' : 'visible';
 
 		var header = document.querySelector("header");
-		if (header) {
-			if (typeof $ !== 'undefined' && $.fn && $.fn.css) {
-				$("header").css("box-shadow", open ? "0 2px 4px rgb(0 0 0 / 8%)" : "17rem 2px 4px rgb(0 0 0 / 8%)");
-			} else {
-				header.style.boxShadow = open ? "0 2px 4px rgb(0 0 0 / 8%)" : "17rem 2px 4px rgb(0 0 0 / 8%)";
-			}
-		}
+		if (header)
+			header.style.boxShadow = open ? "0 2px 4px rgb(0 0 0 / 8%)" : "17rem 2px 4px rgb(0 0 0 / 8%)";
 	},
 });
 

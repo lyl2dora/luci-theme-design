@@ -1,8 +1,8 @@
 /**
- * OpenWrt 23/24 兼容性样式补�?
+ * 新版 LuCI 兼容性样式补丁
  * 
- * 这个文件包含针对 OpenWrt 23.x �?24.x 的样式修�?
- * 新版 LuCI 使用了一些新�?CSS 类名和结�?
+ * 这个文件包含针对 OpenWrt / ImmortalWrt 24.10、25.12 的样式修正，
+ * 新版 LuCI 使用了一些新的 CSS 类名和结构。
  */
 
 /* ============================================
@@ -18,7 +18,7 @@
     margin-bottom: 1rem;
 }
 
-/* 兼容新版 LuCI �?.cbi-map 结构 */
+/* 兼容新版 LuCI 的 .cbi-map 结构 */
 .cbi-map {
     margin-top: 10px;
 }
@@ -27,7 +27,7 @@
    2. 新版表单元素样式
    ============================================ */
 
-/* 新版 LuCI �?input 样式兼容 */
+/* 新版 LuCI 的 input 样式兼容 */
 .cbi-input-text,
 .cbi-input-password,
 .cbi-input-select {
@@ -42,7 +42,7 @@
     max-width: 550px;
 }
 
-/* 新版 checkbox �?radio 样式 */
+/* 新版 checkbox 和 radio 样式 */
 .cbi-input-checkbox,
 .cbi-input-radio {
     width: 1.2rem;
@@ -126,7 +126,7 @@ button.cbi-button {
     vertical-align: middle;
 }
 
-/* 新版表格标题�?*/
+/* 新版表格标题行 */
 .tr.cbi-section-table-titles {
     background-color: var(--inputbg_color);
     font-weight: bold;
@@ -185,10 +185,10 @@ button.cbi-button {
 }
 
 /* ============================================
-   6. 新版标签页样式兼�?
+   6. 新版标签页样式兼容
    ============================================ */
 
-/* 新版 LuCI 标签�?*/
+/* 新版 LuCI 标签页 */
 .cbi-tabmenu {
     display: flex;
     flex-wrap: wrap;
@@ -252,10 +252,10 @@ button.cbi-button {
 }
 
 /* ============================================
-   8. 新版进度条样式兼�?
+   8. 新版进度条样式兼容
    ============================================ */
 
-/* 新版进度�?*/
+/* 新版进度条 */
 .cbi-progressbar {
     position: relative;
     min-width: 11rem;
@@ -280,7 +280,7 @@ button.cbi-button {
     content: attr(title);
     text-align: center;
     line-height: 1.5rem;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: var(--progressbartxt_color);
 }
 
@@ -288,7 +288,7 @@ button.cbi-button {
    9. 新版状态指示器兼容
    ============================================ */
 
-/* 新版状态徽�?*/
+/* 新版状态徽章 */
 .ifacebadge {
     display: inline-flex;
     align-items: center;
@@ -298,12 +298,21 @@ button.cbi-button {
     color: #fff;
     border-radius: 8px;
     font-size: 0.85rem;
+    /* nftables 等页面的徽章内容可能很长，允许换行，
+       否则会溢出到徽章外、以白字落在浅色背景上 */
+    max-width: 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+    word-break: break-word;
 }
 
-.ifacebadge > img,
-.ifacebadge > em {
+/* 只有 <img> 是图标，需要固定尺寸；
+   LuCI 里 .ifacebadge > em 装的是文本（如 <em>任意数据包</em>），
+   给它定宽定高会把文字挤出徽章外 */
+.ifacebadge > img {
     width: 16px;
     height: 16px;
+    flex: none;
 }
 
 /* 区域徽章 */
@@ -318,7 +327,7 @@ button.cbi-button {
    ============================================ */
 
 @media screen and (max-width: 992px) {
-    /* 新版移动端菜�?*/
+    /* 新版移动端菜单 */
     .main-left {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
@@ -352,15 +361,15 @@ button.cbi-button {
     overflow-x: auto;
 }
 
-/* 软件包页�?*/
-[data-page="admin-system-opkg"] .controls {
+/* 软件包页面 */
+[data-page="admin-system-package-manager"] .controls {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
-[data-page="admin-system-opkg"] .controls input[type="text"] {
+[data-page="admin-system-package-manager"] .controls input[type="text"] {
     flex: 1;
     min-width: 200px;
 }
@@ -370,7 +379,7 @@ button.cbi-button {
    ============================================ */
 
 @media (prefers-color-scheme: dark) {
-    /* 新版深色模式下的代码�?*/
+    /* 新版深色模式下的代码块 */
     code, pre {
         background-color: #2d2d2d;
         color: #f8f8f2;
@@ -381,7 +390,7 @@ button.cbi-button {
         background-color: rgba(255, 255, 255, 0.05);
     }
     
-    /* 新版深色模式下的输入�?*/
+    /* 新版深色模式下的输入框 */
     .cbi-input-text:focus,
     .cbi-input-password:focus,
     .cbi-input-select:focus {
@@ -410,10 +419,10 @@ button.cbi-button {
 }
 
 /* ============================================
-   14. 无障碍访问增�?
+   14. 无障碍访问增强
    ============================================ */
 
-/* 焦点可见�?*/
+/* 焦点可见性 */
 :focus-visible {
     outline: 2px solid var(--active_color);
     outline-offset: 2px;

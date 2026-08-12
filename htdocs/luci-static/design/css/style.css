@@ -965,7 +965,7 @@ h4 {
 #cbi-wireless > #wifi_assoclist_table,
 [data-tab-title],
 /* [data-page^="admin-system-admin"]:not(.node-main-login) .cbi-map:not(#cbi-dropbear), */
-[data-page="admin-system-opkg"] #maincontent > .container {
+[data-page="admin-system-package-manager"] #maincontent > .container {
    /* margin: 10px 0 0 0; */
    padding: 10px;
    border: 1px;
@@ -1880,8 +1880,10 @@ form.inline + form.inline,
 .cbi-progressbar::after {
     /* font-weight: bold; */
     /* font-family: monospace; */
-    font-size: 0.75rem !important;
-    font-size-adjust: .38 !important;
+    /* 0.75rem 本就偏小，font-size-adjust: .38 还会把实际渲染再压到约 70%，
+       算下来只有 7.7px，概览页内存/存储/连接数的读数几乎看不清。
+       去掉 adjust 并适当加大；条高 1.5rem，余量足够。 */
+    font-size: 0.85rem !important;
     line-height: 1.5rem !important;
     position: absolute !important;
     top: 0 !important;
@@ -2352,7 +2354,11 @@ input[type="radio"]:focus {
 .cbi-value-field > ul > li .ifacebadge {
 	margin-top: -.5rem;
 	margin-left: .4rem;
-	background-color: #eee;
+	/* 背景是浅色，文字不能跟着 .ifacebadge 的白色走；
+	   这两个变量在浅色/深色两套配色里都是成对的 */
+	background-color: var(--inputbg_color);
+	color: var(--inputtext_color);
+	border: var(--badge_border);
 }
 
 .cbi-section-table-row > .cbi-value-field .cbi-dropdown {
@@ -2507,113 +2513,137 @@ label[data-index][data-depends] {
 	box-shadow: none;
 }
 
+/* 诊断页的输入框走全局 `select, input` 的 2.8rem，按钮走 `.cbi-button, .btn` 的 35px，
+   两者并排就高低不齐。这里把该页的按钮统一到表单控件的 2.8rem。
+   Ping / Traceroute 用的是 ui.ComboButton，渲染成 div.cbi-dropdown.btn.cbi-button，
+   而 compat.css 的 .btn.cbi-button 把它的 inline-flex 压成了 inline-block，
+   导致标签贴顶，所以这里恢复弹性布局做垂直居中。 */
+[data-page="admin-network-diagnostics"] .diag-action > .cbi-button,
+[data-page="admin-network-diagnostics"] .diag-action > .cbi-dropdown {
+	height: 2.8rem;
+	min-height: 2.8rem;
+	line-height: 2.8rem;
+}
+
+[data-page="admin-network-diagnostics"] .diag-action > .cbi-dropdown {
+	display: inline-flex;
+	align-items: center;
+}
+
+[data-page="admin-network-diagnostics"] .td > input,
+[data-page="admin-network-diagnostics"] .td > select,
+[data-page="admin-network-diagnostics"] .td > .diag-action {
+	vertical-align: middle;
+}
+
 input[name="ping"],
 input[name="traceroute"],
 input[name="nslookup"] {
 	width: 80%;
 }
 
-/* fix Main Login */
+/* login page, rendered by themes/design/sysauth.ut */
 
 .node-main-login {
-    text-align: center;
     background-color: var(--bgwhite) !important;
 }
-.node-main-login .cbi-section-node > .cbi-value:nth-of-type(2n) {
-    background: none;
-}
-.node-main-login h2 {
-    font-size: 1.5rem;
-}
 
-.node-main-login header {
-    display: none;
-}
-.node-main-login .navbar {
-    display: none;
-}
-.node-main-login > .main > .main-left {
-    display: none;
-}
-
-.node-main-login > .main > .main-right {
-    width: 100%;
-}
-
-.node-main-login > .main div.cbi-section {
-    /* padding: 0px !important; */
-    margin-bottom: 1rem;
-    display: inline;
-    background: none;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
-}
-
-.node-main-login > .main label.cbi-value-title {
-    display: none !important;
-}
-
-.node-main-login > .main .cbi-section {
-    margin-top: 10px !important;
-}
-
-.node-main-login > .main .cbi-map {
-}
-
-.node-main-login > .main div.cbi-section .cbi-value {
-}
-
-.node-main-login > .main div.cbi-section .cbi-value-title {
-    padding: 10px 0 10px 5px !important;
-}
-
-.node-main-login > .main .cbi-value {
-    border: none;
-}
-
-.node-main-login > .main .cbi-value-title {
-    width: 7rem;
-}
-
-.node-main-login > .main #maincontent {
+.login-page {
+    box-sizing: border-box;
     display: flex;
-    height: 100%;
-    text-align: center;
+    flex-direction: column;
     align-items: center;
-    align-content: center;
     justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem calc(2rem + env(safe-area-inset-bottom));
+    background-color: var(--bgwhite);
 }
 
-/* .node-main-login > .main .container {
-    background-image: var(--logo);
-    background-repeat: no-repeat;
-    background-size: 300px auto;
-    width: 300px;
-    padding: 80px 0 0 0;
-} */
-
-.node-main-login > .main form > div:nth-last-child(1) {
+@supports (min-height: 100dvh) {
+    .login-page {
+        min-height: 100dvh;
+    }
 }
 
-
-.node-main-login > .main .cbi-value > * {
-    display: inline-block !important;
-}
-
-/* .node-main-login > .main .cbi-input-user,
-.node-main-login > .main .cbi-input-password {
-    min-width: 15rem;
-} */
-
-.node-main-login > .main .cbi-input-text {
-    min-width: 15rem;
-}
-
-.node-main-login footer {
-    bottom: 0;
-    position: absolute;
+.login-card {
+    box-sizing: border-box;
     width: 100%;
+    max-width: 22rem;
+    padding: 2rem 1.75rem;
+    border-radius: 14px;
+    background-color: var(--sectionbg_color);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .08);
+}
+
+.login-brand {
+    font-family: "cocon_regular_font";
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: center;
+    color: var(--logo_color);
+    word-break: break-all;
+}
+
+.login-subtitle {
+    margin-top: .35rem;
+    margin-bottom: 1.75rem;
+    font-size: .85rem;
+    text-align: center;
+    color: var(--text_color);
+}
+
+.login-error {
+    margin-bottom: 1.25rem;
+    padding: .6rem .8rem;
+    border-radius: 8px;
+    font-size: .85rem;
+    color: #fff;
+    background-color: #d9534f;
+}
+
+.login-field {
+    margin-bottom: 1.1rem;
+}
+
+.login-label {
+    display: block;
+    margin-bottom: .4rem;
+    font-size: .8rem;
+    color: var(--text_color);
+}
+
+.login-input.cbi-input-text {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.login-input.cbi-input-text:focus {
+    border-color: var(--active_color);
+    outline: none;
+}
+
+.login-submit.cbi-button {
+    display: block;
+    width: 100%;
+    margin-top: 1.5rem;
+    height: 2.8rem;
+    line-height: 2.8rem;
+    border-radius: 8px;
+    font-size: .95rem;
+    color: var(--bttext_color);
+    background-color: var(--active_color);
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    font-size: .75rem;
+    text-align: center;
+    color: var(--text_color);
+    opacity: .7;
 }
 
 /* fix system reboot */
@@ -2623,74 +2653,31 @@ input[name="nslookup"] {
     margin-left: 12px;
 }
 
-.node-main-login > .main .cbi-section {
-    margin-top: 10px !important;
-}
-
-.node-main-login > .main .cbi-map {
-}
-
-.node-main-login > .main div.cbi-section .cbi-value {
-}
-
-.node-main-login > .main div.cbi-section .cbi-value-title {
-    padding: 10px 0 10px 5px !important;
-}
-
-.node-main-login > .main .cbi-value {
-    border: none;
-}
-
-.node-main-login > .main .cbi-value-title {
-    width: 7rem;
-}
-
-.node-main-login > .main #maincontent {
-    display: flex;
-    height: 100%;
-    text-align: center;
-    align-items: center;
-    align-content: center;
-    justify-content: center;
-}
-
-/* .node-main-login > .main .container {
-    background-image: var(--logo);
-    background-repeat: no-repeat;
-    background-size: 300px auto;
-    width: 300px;
-    padding: 80px 0 0 0;
-} */
-
-.node-main-login > .main form > div:nth-last-child(1) {
-}
-
-
-.node-main-login > .main .cbi-value > * {
-    display: inline-block !important;
-}
-
-/* .node-main-login > .main .cbi-input-user,
-.node-main-login > .main .cbi-input-password {
-    min-width: 15rem;
-} */
-
-.node-main-login > .main .cbi-input-text {
-    min-width: 15rem;
-}
-
-.node-main-login footer {
-    bottom: 0;
-    position: absolute;
-    width: 100%;
-}
-
-
-
 /* fix status */
-.node-status-overview > .main fieldset:nth-child(4) .td:nth-child(2),
-.node-status-processes > .main .table .tr .td:nth-child(3) {
+.node-status-overview > .main fieldset:nth-child(4) .td:nth-child(2) {
 	white-space: normal;
+}
+
+/* 进程列表：命令列的内容可能长达数百字符，而 .td 默认 nowrap，
+   会把这一列撑到几千像素，整表溢出视口，右边的 CPU/内存/动作列被顶出屏幕。
+   让中间的"命令"列换行来吸收宽度，两侧各列保持自然宽度（缩中间，不缩两边）；
+   空间实在不够时由表格自身横向滚动，而不是把整个页面拖宽。
+   注：overflow 对 display:table 无效，必须先改成 block 才能形成滚动容器。
+   另注：原规则写的是 .node-status-processes，但实际 body 类是
+   node-admin-status-processes，所以一直没有生效。 */
+[data-page="admin-status-processes"] #view table.table {
+	display: block;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+[data-page="admin-status-processes"] .table .th:nth-child(3),
+[data-page="admin-status-processes"] .table .td:nth-child(3) {
+	white-space: normal;
+	overflow-wrap: anywhere;
+	text-align: left;
+	/* 不给下限的话，窄屏下这一列会被压到 ~27px，一个字一行 */
+	min-width: 14rem;
 }
 
 /* fix system reboot */
@@ -2735,19 +2722,19 @@ input[name="nslookup"] {
 	gap: 8px;
 }
 
-[data-page="admin-system-opkg"] div.btn {
+[data-page="admin-system-package-manager"] div.btn {
 	line-height: 3;
 	display: inline;
 	padding: .3rem .6rem;
 }
 /* 
 [data-page^="admin-system-admin"]:not(.node-main-login) .cbi-map:not(#cbi-dropbear),
-[data-page="admin-system-opkg"] #maincontent > .container {
+[data-page="admin-system-package-manager"] #maincontent > .container {
 	margin-top: 2rem;
 	padding-top: .1rem;
 } */
 
-[data-page="admin-system-opkg"] #maincontent > .container {
+[data-page="admin-system-package-manager"] #maincontent > .container {
 	margin: 2rem;
 	margin-bottom: 1rem;
     border-radius: 8px;
@@ -3559,8 +3546,8 @@ td.cbi-button, .cbi-button-apply,
     border-color: rgb(0,171,232) !important;
 }
 
-/* fix node-admin-system-opkg cbi-button-positive */
-.node-admin-system-opkg button.btn.cbi-button-positive {
+/* fix node-admin-system-package-manager cbi-button-positive */
+.node-admin-system-package-manager button.btn.cbi-button-positive {
     color: var(--bttext_color);
     background-color: var(--active_color) !important;
     border-color: var(--active_color) !important;

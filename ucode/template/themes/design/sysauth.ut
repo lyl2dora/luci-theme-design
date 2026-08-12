@@ -1,0 +1,75 @@
+{#
+	Design is a clean HTML5 theme for LuCI. It is based on luci-theme-material and luci-theme-neobird
+
+	luci-theme-design login view
+
+	Licensed to the public under the Apache License 2.0
+-#}
+
+{% include('header', { blank_page: true }) %}
+
+{%
+	const boardinfo = ubus.call('system', 'board') ?? {};
+	const hostname = striptags(boardinfo.hostname ?? 'OpenWrt');
+
+	let https_ports = uci.get('uhttpd', 'main', 'listen_https') ?? [];
+
+	https_ports = uniq(filter(
+		map(
+			(type(https_ports) == 'string') ? split(https_ports, /\s+/) : https_ports,
+			e => +match(e, /\d+$/)?.[0]
+		),
+		p => (p > 0 && p <= 65535)
+	));
+-%}
+
+<div class="login-page">
+	<form class="login-card" method="post" action="{{ entityencode(http.getenv('REQUEST_URI') ?? '', true) }}">
+		<div class="login-brand">{{ hostname }}</div>
+		<div class="login-subtitle">{{ _('Authorization Required') }}</div>
+
+		{% if (fuser): %}
+		<div class="login-error">{{ _('Invalid username and/or password! Please try again.') }}</div>
+		{% endif %}
+
+		<div class="login-field">
+			<label class="login-label" for="luci_username">{{ _('Username') }}</label>
+			<input class="cbi-input-text login-input" id="luci_username" name="luci_username" type="text"
+				autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"
+				value="{{ entityencode(duser, true) }}">
+		</div>
+
+		<div class="login-field">
+			<label class="login-label" for="luci_password">{{ _('Password') }}</label>
+			<input class="cbi-input-text login-input" id="luci_password" name="luci_password" type="password"
+				autocomplete="current-password">
+		</div>
+
+		<button class="cbi-button cbi-button-apply login-submit" type="submit">{{ _('Log in') }}</button>
+	</form>
+
+	<div class="login-footer">Powered by {{ version.luciname }} ({{ version.luciversion }}) / {{ version.distname }} {{ version.distversion }}</div>
+</div>
+
+<script>
+	(function() {
+		var input = document.getElementById('luci_password');
+
+		if (input)
+			input.focus();
+
+		if (document.location.protocol != 'https:') {
+			{{ https_ports }}.forEach(function(port) {
+				var url = 'https://' + window.location.hostname + ':' + port + window.location.pathname;
+				var img = new Image();
+
+				img.onload = function() { window.location = url };
+				img.src = 'https://' + window.location.hostname + ':' + port + '{{ resource }}/icons/loading.svg?' + Math.random();
+
+				setTimeout(function() { img.src = '' }, 5000);
+			});
+		}
+	})();
+</script>
+
+{% include('footer', { blank_page: true }) %}
