@@ -17,12 +17,12 @@ on:
         - 25.12.0
         - 24.10.6
       upload_artifact:
-        description: '是否上传到 Artifact'
+        description: '上传到 Artifact（在本次运行页面底部下载）'
         required: false
         type: boolean
-        default: false
+        default: true
       upload_release:
-        description: '是否上传到 Release'
+        description: '上传到 Release（仅在 tag 上有效）'
         required: false
         type: boolean
         default: true
@@ -39,7 +39,22 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      # 在 tag 之外的 ref 上是发不了 Release 的，这里提前说清楚，
+      # 免得跑完十来分钟才发现那一步被静默跳过
+      - name: Check release preconditions
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_release && !startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "::warning title=不会创建 Release::当前运行在 ${GITHUB_REF} 上，不是 tag，因此不会创建 Release。构建产物会以 Artifact 形式提供。要发布 Release，请推送一个 v* 开头的 tag，或在 tag 上手动触发。"
+          {
+            echo "### 未创建 Release"
+            echo
+            echo "本次运行在 \`${GITHUB_REF}\` 上，不是 tag，因此跳过了 Release 发布。"
+            echo "构建产物请到本页面底部的 **Artifacts** 区下载。"
+            echo
+            echo "要发布 Release：推送 \`v*\` 开头的 tag（会自动发布），或在 tag 上手动触发。"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Initialization Environment
         env:
@@ -86,18 +101,30 @@ jobs:
           [ -n "$TARGET" ] || { echo "::error::未生成安装包"; exit 1; }
           echo "TARGET=$(pwd)/$TARGET"
           echo "TARGET=$(pwd)/$TARGET" >> $GITHUB_OUTPUT
+          echo "NAME=$(basename "$TARGET")" >> $GITHUB_OUTPUT
           echo "status=success" >> $GITHUB_OUTPUT
+          {
+            echo "### 构建成功"
+            echo
+            echo "| 项 | 值 |"
+            echo "|---|---|"
+            echo "| 安装包 | \`$(basename "$TARGET")\` |"
+            echo "| 体积 | $(du -h "$TARGET" | cut -f1) |"
+            echo "| SDK | ImmortalWrt ${SDK_VERSION} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
+      # 默认就上传 Artifact：手动跑一次总该能拿到东西
       - name: Upload to artifact
-        uses: actions/upload-artifact@v4
-        if: steps.build.outputs.status == 'success' && inputs.upload_artifact && !cancelled()
+        uses: actions/upload-artifact@v7
+        if: steps.build.outputs.status == 'success' && inputs.upload_artifact != false && !cancelled()
         with:
           name: luci-theme-design-${{ env.SDK_VERSION }}
           path: ${{ steps.build.outputs.TARGET }}
+          if-no-files-found: error
 
       # 只有 tag 上才有 Release 可发；手动触发时再看 upload_release 开关
       - name: Upload to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: >-
           steps.build.outputs.status == 'success'
           && startsWith(github.ref, 'refs/tags/')
