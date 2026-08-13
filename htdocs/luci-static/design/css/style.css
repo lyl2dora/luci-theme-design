@@ -50,6 +50,7 @@
     --model_background: #ffffff;
     --model_text_color: #333333;
     --scrollbar_color:#d0d0d0;
+    --scrollbar_hover_color:#b3b3b3;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -92,6 +93,7 @@
     --model_background: #2c2c2e;
     --model_text_color: #fefefe;
     --scrollbar_color:#4a4a4a;
+    --scrollbar_hover_color:#6e6e6e;
   }
 }
 
@@ -119,18 +121,93 @@ div{
     font-family: 'HYk2gj';
 }
 
+/* 滚动条：默认隐形，指针移入容器时才浮现。
+   轨道 10px 全透明、不画任何底色，滑块靠 1px 透明边框 + background-clip
+   收窄到 8px 可见——留 1px 只是别让它贴死容器边，命中区域仍是整条 10px。 */
 ::-webkit-scrollbar {
-    width: 4px;
+    width: 10px;
+    height: 10px;
 }
 
+/* 轨道彻底不画：background 连同可能残留的 box-shadow 一起清掉。
+   track-piece 是滑块两侧那两段，Chromium 会单独绘制，得一并按掉。 */
 ::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 0px rgba(240, 240, 240, .5);
-  background-color: rgb(255 255 255 / 0%);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+::-webkit-scrollbar-track-piece {
+    background: transparent;
+    box-shadow: none;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* 隐现走的是自定义属性而不是 `:hover::-webkit-scrollbar-thumb`：Chromium 下
+   单纯的 hover 不会让它重新解析滚动条伪元素——除非这次 hover 同时改变了元素
+   自身某个参与渲染的属性。让滑块颜色读一个由 hover 改写的变量，正好满足这点。
+   `*` 那条把默认值重置掉、隔断继承，否则悬停在页面任意处都会把页面上所有
+   容器的滚动条一起点亮；隔断后只有指针真正落在的容器（及其祖先，也就是
+   主文档）才亮出滚动条。 */
+* {
+    --sb_thumb: transparent;
+}
+
+:hover {
+    --sb_thumb: var(--scrollbar_color);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar_color) ;
+    background-color: var(--sb_thumb);
+    background-clip: padding-box;
+    border: 1px solid transparent;
     border-radius: 10px;
+    transition: background-color .25s ease;
+}
+
+/* 指针压到滑块本身时再加深并加粗一档，边框归零即占满整条轨道 */
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar_hover_color);
+    border-width: 0;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar_hover_color);
+    border-width: 0;
+}
+
+/* Firefox 不认 ::-webkit-scrollbar，只能用标准属性做同样的隐现。
+   这两个属性必须锁在这里：它们可继承，且 Chromium 121+ 只要见到非 auto
+   的值就会整体忽略上面那套 webkit 样式，写在外面等于把全站滚动条打回原形。 */
+@supports not selector(::-webkit-scrollbar) {
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color .25s ease;
+    }
+
+    html:hover {
+        scrollbar-color: var(--scrollbar_color) transparent;
+    }
+}
+
+/* 纯触屏设备没有 hover，唤不出滚动条，维持原先的细窄常驻样式 */
+@media (hover: none) {
+    ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+
+    * {
+        --sb_thumb: var(--scrollbar_color);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-width: 0;
+    }
 }
 
 html {
