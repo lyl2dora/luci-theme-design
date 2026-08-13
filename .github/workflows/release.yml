@@ -16,13 +16,8 @@ on:
         - 25.12.1
         - 25.12.0
         - 24.10.6
-      upload_artifact:
-        description: '上传到 Artifact（在本次运行页面底部下载）'
-        required: false
-        type: boolean
-        default: true
       upload_release:
-        description: '上传到 Release（仅在 tag 上有效）'
+        description: '发布 Release（不勾则只产出 Artifact）'
         required: false
         type: boolean
         default: true
@@ -40,21 +35,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
-
-      # 在 tag 之外的 ref 上是发不了 Release 的，这里提前说清楚，
-      # 免得跑完十来分钟才发现那一步被静默跳过
-      - name: Check release preconditions
-        if: github.event_name == 'workflow_dispatch' && inputs.upload_release && !startsWith(github.ref, 'refs/tags/')
-        run: |
-          echo "::warning title=不会创建 Release::当前运行在 ${GITHUB_REF} 上，不是 tag，因此不会创建 Release。构建产物会以 Artifact 形式提供。要发布 Release，请推送一个 v* 开头的 tag，或在 tag 上手动触发。"
-          {
-            echo "### 未创建 Release"
-            echo
-            echo "本次运行在 \`${GITHUB_REF}\` 上，不是 tag，因此跳过了 Release 发布。"
-            echo "构建产物请到本页面底部的 **Artifacts** 区下载。"
-            echo
-            echo "要发布 Release：推送 \`v*\` 开头的 tag（会自动发布），或在 tag 上手动触发。"
-          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Initialization Environment
         env:
@@ -97,46 +77,70 @@ jobs:
           echo "CONFIG_PACKAGE_luci-theme-design=y" >> .config
           make defconfig
           make package/luci-theme-design/compile V=s -j$(nproc)
+
           TARGET="$(find bin/ -name 'luci-theme-design*' \( -name '*.apk' -o -name '*.ipk' \) | head -1)"
           [ -n "$TARGET" ] || { echo "::error::未生成安装包"; exit 1; }
+          NAME="$(basename "$TARGET")"
+          # luci-theme-design-8.0-r20260813.apk -> 8.0-r20260813
+          VERSION="${NAME#luci-theme-design-}"
+          VERSION="${VERSION%.apk}"
+          VERSION="${VERSION%.ipk}"
+
           echo "TARGET=$(pwd)/$TARGET"
-          echo "TARGET=$(pwd)/$TARGET" >> $GITHUB_OUTPUT
-          echo "NAME=$(basename "$TARGET")" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
+          {
+            echo "TARGET=$(pwd)/$TARGET"
+            echo "NAME=$NAME"
+            echo "VERSION=$VERSION"
+            echo "status=success"
+          } >> "$GITHUB_OUTPUT"
           {
             echo "### 构建成功"
             echo
             echo "| 项 | 值 |"
             echo "|---|---|"
-            echo "| 安装包 | \`$(basename "$TARGET")\` |"
+            echo "| 安装包 | \`$NAME\` |"
             echo "| 体积 | $(du -h "$TARGET" | cut -f1) |"
             echo "| SDK | ImmortalWrt ${SDK_VERSION} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # 默认就上传 Artifact：手动跑一次总该能拿到东西
+      # Artifact 无条件产出，不给开关
       - name: Upload to artifact
         uses: actions/upload-artifact@v7
-        if: steps.build.outputs.status == 'success' && inputs.upload_artifact != false && !cancelled()
+        if: steps.build.outputs.status == 'success' && !cancelled()
         with:
           name: luci-theme-design-${{ env.SDK_VERSION }}
           path: ${{ steps.build.outputs.TARGET }}
           if-no-files-found: error
 
-      # 只有 tag 上才有 Release 可发；手动触发时再看 upload_release 开关
+      # Release 的归属需要一个 tag，这是 GitHub 的硬性要求。
+      # 在 tag 上跑就沿用该 tag，否则用包版本号造一个（指向当前 commit）。
+      # 注意：这里只决定 tag 叫什么，不决定要不要发 Release。
+      - name: Resolve release tag
+        id: tag
+        if: steps.build.outputs.status == 'success' && (github.event_name == 'push' || inputs.upload_release) && !cancelled()
+        run: |
+          case "$GITHUB_REF" in
+            refs/tags/*) TAG="${GITHUB_REF#refs/tags/}" ;;
+            *)           TAG="v${{ steps.build.outputs.VERSION }}" ;;
+          esac
+          echo "TAG=$TAG"
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+          echo "本次 Release tag：\`$TAG\`（指向 ${GITHUB_SHA:0:7}）" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload to release
         uses: softprops/action-gh-release@v3
-        if: >-
-          steps.build.outputs.status == 'success'
-          && startsWith(github.ref, 'refs/tags/')
-          && (github.event_name != 'workflow_dispatch' || inputs.upload_release)
-          && !cancelled()
+        if: steps.build.outputs.status == 'success' && (github.event_name == 'push' || inputs.upload_release) && !cancelled()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: ${{ steps.tag.outputs.TAG }}
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          # 分支上跑时 tag 尚不存在，由 action 创建并指向当前 commit
+          target_commitish: ${{ github.sha }}
           prerelease: false
           generate_release_notes: true
+          overwrite_files: true
+          fail_on_unmatched_files: true
           files: |
             ${{ steps.build.outputs.TARGET }}
             LICENSE
