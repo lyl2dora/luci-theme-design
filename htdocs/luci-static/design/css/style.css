@@ -3506,33 +3506,93 @@ input[name="nslookup"] {
 }
 
 
+/* 底部快捷导航：只在移动端布局出现，断点与侧栏抽屉保持一致 */
 .navbar {
-    z-index: 200;
-	overflow: hidden;
-	position: fixed;
-	bottom: 0;
-	width: 100%;
-	border-top: var(--nav_border);
-	text-align: center;
-	height:calc(50px + constant(safe-area-inset-bottom));
-	height:calc(50px + env(safe-area-inset-bottom));
-	background-color: var(--navbg_color);
-	  -webkit-backdrop-filter: blur(10px);
-	backdrop-filter: blur(10px);
-  }
-  
-  .navbar a {
-	  float: left;
-	  text-align: center;
-	  padding: 8px 0;
-	  width: 20%;
-	  text-decoration: none;
-	  max-width: 100px;
-  }
+	display: none;
+}
 
-  .navbar a img {
-	width: 28px;
-  }
+@media screen and (max-width: 992px) {
+	.navbar {
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		/* 低于 .darkMask(99) 和 .main-left(100)，抽屉展开时不再压在菜单上面 */
+		z-index: 98;
+		/* 高度只算内容区，安全区靠 padding 撑，图标不会被顶进 home 条 */
+		box-sizing: content-box;
+		height: 50px;
+		padding-bottom: constant(safe-area-inset-bottom);
+		padding-bottom: env(safe-area-inset-bottom);
+		border-top: var(--nav_border);
+		background-color: var(--navbg_color);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
+
+	.navbar a {
+		position: relative;
+		display: flex;
+		flex: 1 1 0;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		/* 窄屏均分，宽屏单个不铺开、整组居中 */
+		max-width: 120px;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* 当前所在页：图标下方垫一层主题色圆角块 */
+	.navbar a::before {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 48px;
+		height: 32px;
+		border-radius: 16px;
+		background-color: var(--active_color);
+		opacity: 0;
+		transform: translate(-50%, -50%);
+		transition: opacity 150ms ease;
+	}
+
+	.navbar a.active::before {
+		opacity: .16;
+	}
+
+	.navbar a img {
+		position: relative;
+		display: block;
+		width: 28px;
+		height: 28px;
+		opacity: .45;
+		transition: opacity 150ms ease, transform 150ms ease;
+	}
+
+	.navbar a.active img {
+		opacity: 1;
+	}
+
+	.navbar a:active img {
+		transform: scale(.86);
+	}
+
+	/* 给固定导航条让出高度，不再依赖隐藏页脚占位 */
+	#maincontent {
+		padding-bottom: 50px;
+		padding-bottom: calc(50px + constant(safe-area-inset-bottom));
+		padding-bottom: calc(50px + env(safe-area-inset-bottom));
+	}
+
+	/* 页脚在移动端本就 visibility:hidden，去掉它 112px 的空占位 */
+	#maincontent > footer {
+		display: none;
+	}
+}
 
   .cbi-input-apply,
   .cbi-button-apply,

@@ -22,6 +22,14 @@
 	const hostname = striptags(boardinfo.hostname ?? 'OpenWrt');
 	const nodepath = join('-', ctx.path ?? []);
 
+	// 底部导航当前项：精确匹配或作为前缀匹配（如 status/realtime/load 也算命中）
+	const navpath = join('/', ctx.path ?? []);
+
+	function nav_active(path) {
+		return (navpath == path || index(navpath, `${path}/`) == 0)
+			? ' class="active" aria-current="page"' : '';
+	}
+
 	http.prepare_content('text/html; charset=UTF-8');
 -%}
 <!DOCTYPE html>
@@ -80,13 +88,12 @@
 	</div>
 </header>
 
-<div class="navbar">
-	<a href="{{ dispatcher.build_url('admin/status/overview') }}"><img src="{{ media }}/images/home.png"></a>
-	<a href="{{ dispatcher.build_url('admin/services/openclash') }}"><img src="{{ media }}/images/openclash.png"></a>
-	<a href="{{ dispatcher.build_url('admin/network/network') }}"><img src="{{ media }}/images/link.png"></a>
-	<a href="{{ dispatcher.build_url('admin/status/realtime') }}"><img src="{{ media }}/images/rank.png"></a>
-	<a href="{{ dispatcher.build_url('admin/system/admin') }}"><img src="{{ media }}/images/user.png"></a>
-</div>
+<nav class="navbar" aria-label="{{ _('Navigation') }}">
+	<a href="{{ dispatcher.build_url('admin/status/overview') }}"{{ nav_active('admin/status/overview') }} title="{{ _('Overview') }}" aria-label="{{ _('Overview') }}"><img src="{{ media }}/images/home.png" alt=""></a>
+	<a href="{{ dispatcher.build_url('admin/network/network') }}"{{ nav_active('admin/network/network') }} title="{{ _('Network') }}" aria-label="{{ _('Network') }}"><img src="{{ media }}/images/link.png" alt=""></a>
+	<a href="{{ dispatcher.build_url('admin/status/realtime') }}"{{ nav_active('admin/status/realtime') }} title="{{ _('Realtime Graphs') }}" aria-label="{{ _('Realtime Graphs') }}"><img src="{{ media }}/images/rank.png" alt=""></a>
+	<a href="{{ dispatcher.build_url('admin/system/admin') }}"{{ nav_active('admin/system/admin') }} title="{{ _('Administration') }}" aria-label="{{ _('Administration') }}"><img src="{{ media }}/images/user.png" alt=""></a>
+</nav>
 
 <div class="main">
 	<div class="loading"><span><div class="loading-img"></div>{{ _('Collecting data...') }}</span></div>
