@@ -1,5 +1,49 @@
 # 更新日志
 
+## [8.1] - 2026-08-15
+
+一轮整体自查后的修复，集中在 `compat.css` 与 `style.css` 的层叠冲突。
+
+### 修复
+- 🐛 **下拉框把全部选项平铺出来**：`compat.css` 的 `.cbi-dropdown > ul > li { display:flex }`
+  与 `style.css` 的 `display:none` 特异性相同 (0,1,2) 且后加载，废掉了 LuCI 靠
+  `li[display]` 属性只显示选中项的机制。表现为时区等下拉一次列出全部选项；
+  「未保存的配置」弹窗里的 ComboButton 同时显示「保存并应用」和「强制应用」，
+  被撑高后与同排按钮基线错开约 43px。该规则改为只调内边距
+- 🐛 **「编辑」「删除」按钮被刷成同一种蓝**：`compat.css` 的 `.btn.cbi-button` (0,2,0)
+  带着 `color`/`background-color`，压过 `style.css` 里 (0,1,0) 的 `.cbi-button-edit`
+  / `.cbi-button-remove`。删掉这两个声明，配色交回语义类；`.btn.cbi-button`
+  只保留形状
+- 🐛 **全站危险按钮变灰**：`style.css` 里 `.node-admin-status-processe, button.btn.cbi-button-negative`
+  的逗号让第二段成了全局选择器，(0,2,1)+`!important` 压过红色。补上漏掉的 s
+  并去掉逗号，限定回进程页；同页的 `.cbi-button-action` 规则也补上 s（原先从未匹配）
+- 🐛 **整个界面正文用错字体**：`div { font-family:'HYk2gj' }` 引用了未随包发布、
+  也没有 `@font-face` 和回退的字体，div 连同全部后代（`#maincontent`/`.container`/
+  `.cbi-section` 都是 div）掉到浏览器默认标准字体上。删除该规则
+- 🐛 展开的下拉最后一项底色 `#627486` 配 `--text_color` 文字，对比度约 1.2:1，去掉底色
+- 🐛 `menu-design.js` 缺 `catch`，且收起 loading 遮罩的代码在 `render()` 中段：
+  菜单加载失败或渲染中途抛异常会把页面永久锁在全屏白色遮罩上。改为先收遮罩再渲染，
+  并补上 `catch`
+- 🐛 `data-title` 只替换第一个空格，而 CSS 里 `[data-title="Bandwidth Monitor"]`
+  等选择器写的是空格，图标规则从未生效。JS 改全局替换，CSS 选择器改下划线形式
+- 🐛 桌面端拖动窗口后 header 的 17rem 阴影消失：`handleSidebarToggle` 在 resize 时
+  只看切换前状态，把 `style.js` 刚按宽度设好的阴影抹掉。改为按"侧栏是否可见"判断
+- 🐛 CI 从产物文件名反推版本号只对 apk 命名成立，选 24.10 SDK 出的 ipk
+  （`名_版本_架构.ipk`）会剥不掉前缀，导致 Release tag 变成一长串文件名。
+  改为直接读 Makefile
+
+### 改进
+- 🔧 底部导航图标改用 `filter` 定灰度：原先 `opacity:.45` 合成下来约 `#CDCDCD`
+  （对比度 1.4:1），现未选中约 `#6B6B6B`(4.8:1)、选中约 `#363636`(10.9:1)，
+  深色模式单独反向调整
+- 🔧 页脚一直是 `visibility:hidden`，文字从不显示却在桌面端占 80px+2rem 空白，
+  改为 `display:none`
+- 🔧 `.cbi-button, .btn` 统一 `vertical-align: middle`，避免 `<button>` 与
+  ComboButton（div）按各自基线对齐时错位
+- 🔧 `manifest.json` 去掉非标准字段（`prompt_message`/`status`）和上游遗留的
+  `gcm_sender_id`；图标尺寸按实际的 267×267 声明（原先写 144/192 都不符）
+- 🔧 修复 `style.css` 里一处 GBK→UTF-8 转换丢字的注释，删除死变量 `--section_shaddow`
+
 ## [8.0] - 2026-08-13
 
 适配 ImmortalWrt / OpenWrt 25.12，同时兼容 24.10。不再支持 23.05 及更早版本。

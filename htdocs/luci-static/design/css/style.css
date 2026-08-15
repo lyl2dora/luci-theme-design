@@ -22,7 +22,6 @@
     --nav_border: 1px solid #f2f2f2;
     --sectionbg_color: #fff;
     --sectionbg_color2: #fff;
-    --section_shaddow: 3px 3px 3px rgba(0,0,0,.05);
     --section_border: none;
     --sectiontab_border: none;
     --tabmenu_border_lr: none;
@@ -65,7 +64,6 @@
     --nav_border: 1px solid #1c1c1e;
     --sectionbg_color: #1c1c1e;
     --sectionbg_color2: #1c1c1e;
-    --section_shaddow: 3px 3px 3px rgba(0,0,0,.05);
     --section_border: none;
     --sectiontab_border: none;
     --sectionnode_border: #3d3d41 1px solid;
@@ -117,9 +115,10 @@
   src: url('../fonts/Cocon-Regular-Font.otf') format('opentype');
 }
 
-div{
-    font-family: 'HYk2gj';
-}
+/* 这里原有一条 `div { font-family: 'HYk2gj' }`。该字体既没有 @font-face
+   也没随包发布，且没写回退，于是 div 连同它的全部后代（#maincontent /
+   .container / .cbi-section 都是 div，等于整个界面正文）都掉到浏览器默认
+   标准字体上，只剩 h1-h6 和表单控件还用主题字体。删掉后走 body 的继承。 */
 
 /* 滚动条：默认隐形，指针移入容器时才浮现。
    轨道 10px 全透明、不画任何底色，滑块靠 1px 透明边框 + background-clip
@@ -426,13 +425,15 @@ header {
     z-index: 101;
 }
 
+/* 页脚一直是 visibility:hidden，文字从来不显示，却在桌面端占着 80px+2rem
+   的空白（移动端已单独去掉）。既然是刻意隐藏，改成 display:none 一并去掉
+   占位。想把 LuCI / OpenWrt 版本号显示出来，把 display 改回 block 即可。 */
 footer {
     text-align: right;
     padding: 1rem;
     color: #aaa;
     font-size: 11px;
-    height: 80px;
-    visibility:hidden;
+    display: none;
     /*text-shadow: 0px 0px 2px #BBB;*/
 }
 
@@ -858,7 +859,9 @@ span[data-indicator="uci-changes"] {
     content: "\72";
 }
 
-.main > .main-left > .nav > .slide > a[data-title="Bandwidth Monitor"]:before {
+/* menu-design.js 会把菜单标题里的空格换成下划线再写进 data-title，
+   所以这里的选择器必须用下划线形式，写空格永远匹配不上。 */
+.main > .main-left > .nav > .slide > a[data-title="Bandwidth_Monitor"]:before {
     content: "\e764";
 }
 
@@ -874,7 +877,7 @@ span[data-indicator="uci-changes"] {
 	content: "\e7dd";
 }
 
-.main > .main-left > .nav > li > a[data-title="Inital Setup"]:before {
+.main > .main-left > .nav > li > a[data-title="Inital_Setup"]:before {
     content: "\e67e";
 }
 
@@ -1056,7 +1059,6 @@ h4 {
    overflow-y: hidden;
    background-color: var(--sectionbg_color);
    border-radius: 8px;
-   /* box-shadow: var(--section_shaddow); */
    -webkit-overflow-scrolling: touch;
 }
 
@@ -1281,6 +1283,9 @@ td > table > tbody > tr > td,
     height: 35px;
     line-height: 35px;
     border-radius: 8px;
+    /* 同一行里 <button> 与 ComboButton（div）默认按各自的基线对齐，
+       高度一样也会看着错位，统一按中线对齐 */
+    vertical-align: middle;
 }
 
 
@@ -1906,10 +1911,11 @@ form.inline + form.inline,
 	background: linear-gradient(90deg, #a3c2e8 0%, #84aad9 100%);
 }
 
+/* 不要在这里给 last-child 上底色：展开的下拉最后一项会变成 #627486 灰蓝，
+   而文字仍是 --text_color，实测对比度约 1.2:1，基本看不清。 */
 .cbi-dropdown[open] > ul.dropdown > li:last-child {
 	margin-bottom: 0;
 	border-bottom: 0;
-    background: #627486;
 }
 
 .cbi-dropdown[open] > ul.dropdown > li[unselectable] {
@@ -2404,7 +2410,7 @@ td > .ifacebadge,
 	margin-top: .1rem;
 }
 
-/* 去掉 checkbox �?radio 的背景和边框 */
+/* 去掉 checkbox 和 radio 的背景和边框 */
 input[type="checkbox"],
 input[type="radio"] {
 	background: transparent !important;
@@ -3564,17 +3570,20 @@ input[name="nslookup"] {
 		opacity: .16;
 	}
 
+	/* 源图是 #999 的浅灰线稿。用 opacity 淡化在浅色底上永远压不出对比
+	   （原先 .45 合成下来约 #CDCDCD，对比度 1.4:1），改成用 filter 直接
+	   定灰度：未选中约 #6B6B6B(4.8:1)，选中约 #363636(10.9:1)。 */
 	.navbar a img {
 		position: relative;
 		display: block;
 		width: 28px;
 		height: 28px;
-		opacity: .45;
-		transition: opacity 150ms ease, transform 150ms ease;
+		filter: brightness(.7);
+		transition: filter 150ms ease, transform 150ms ease;
 	}
 
 	.navbar a.active img {
-		opacity: 1;
+		filter: brightness(.35);
 	}
 
 	.navbar a:active img {
@@ -3587,10 +3596,16 @@ input[name="nslookup"] {
 		padding-bottom: calc(50px + constant(safe-area-inset-bottom));
 		padding-bottom: calc(50px + env(safe-area-inset-bottom));
 	}
+}
 
-	/* 页脚在移动端本就 visibility:hidden，去掉它 112px 的空占位 */
-	#maincontent > footer {
-		display: none;
+/* 深色底下同一张浅灰线稿要往亮里调，方向和浅色模式相反 */
+@media (prefers-color-scheme: dark) {
+	.navbar a img {
+		filter: brightness(.85);
+	}
+
+	.navbar a.active img {
+		filter: brightness(1.7);
 	}
 }
 
@@ -3663,8 +3678,7 @@ td.cbi-button, .cbi-button-apply,
     overflow-x: auto;
     overflow-y: hidden;
     background-color: var(--sectionbg_color);
-    /* box-shadow: var(--section_shaddow); */
-    -webkit-overflow-scrolling: touch;
+     -webkit-overflow-scrolling: touch;
 	border: var(--section_border);
     margin-bottom: 20px;
     border-radius: 8px;
@@ -3676,8 +3690,8 @@ td.cbi-button, .cbi-button-apply,
     white-space: nowrap; 
 }
 
-/* fix node-admin-status-processe */
-.node-admin-status-processe button.btn.cbi-button-action {
+/* fix node-admin-status-processes（原先少个 s，从来没匹配上） */
+.node-admin-status-processes button.btn.cbi-button-action {
     color: var(--bttext_color);
     background-color: rgb(0,171,232) !important;
     border-color: rgb(0,171,232) !important;
@@ -3690,7 +3704,11 @@ td.cbi-button, .cbi-button-apply,
     border-color: var(--active_color) !important;
 }
 
-.node-admin-status-processe, button.btn.cbi-button-negative {
+/* 原先写成 `.node-admin-status-processe, button.btn.cbi-button-negative`：
+   逗号让第二段成了全局选择器，(0,2,1)+!important 压过 compat.css 的红色，
+   全站的危险按钮（关闭接口 / 强制应用 / 文件删除…）都变成了灰色。
+   补上 s 并去掉逗号，限定回进程页。 */
+.node-admin-status-processes button.btn.cbi-button-negative {
     color: #fff !important;
     background-color: #617486 !important;
 }

@@ -81,10 +81,15 @@ jobs:
           TARGET="$(find bin/ -name 'luci-theme-design*' \( -name '*.apk' -o -name '*.ipk' \) | head -1)"
           [ -n "$TARGET" ] || { echo "::error::未生成安装包"; exit 1; }
           NAME="$(basename "$TARGET")"
-          # luci-theme-design-8.0-r20260813.apk -> 8.0-r20260813
-          VERSION="${NAME#luci-theme-design-}"
-          VERSION="${VERSION%.apk}"
-          VERSION="${VERSION%.ipk}"
+          # 版本直接读 Makefile，不从文件名反推：apk 是
+          # luci-theme-design-8.0-r20260815.apk，ipk 是
+          # luci-theme-design_8.0-r20260815_all.ipk（下划线 + 架构后缀），
+          # 24.10 走的是后者，按 apk 的规则剥前缀会剥不掉。
+          MK="$GITHUB_WORKSPACE/Makefile"
+          PKG_VER="$(sed -n 's/^PKG_VERSION:=//p' "$MK")"
+          PKG_REL="$(sed -n 's/^PKG_RELEASE:=//p' "$MK")"
+          [ -n "$PKG_VER" ] && [ -n "$PKG_REL" ] || { echo "::error::无法从 Makefile 解析版本"; exit 1; }
+          VERSION="${PKG_VER}-r${PKG_REL}"
 
           echo "TARGET=$(pwd)/$TARGET"
           {

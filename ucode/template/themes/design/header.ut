@@ -61,8 +61,8 @@
 
 	<link rel="manifest" href="{{ media }}/manifest.json">
 	<link rel="shortcut icon" href="{{ media }}/favicon.ico">
-	<link rel="icon" href="{{ media }}/images/icon.png" sizes="192x192">
-	<link rel="apple-touch-icon" sizes="192x192" href="{{ media }}/images/icon.png">
+	<link rel="icon" href="{{ media }}/images/icon.png" sizes="267x267">
+	<link rel="apple-touch-icon" href="{{ media }}/images/icon.png">
 
 	<link rel="stylesheet" href="{{ media }}/css/style.css">
 	<link rel="stylesheet" href="{{ media }}/css/compat.css">

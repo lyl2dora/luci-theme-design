@@ -56,14 +56,15 @@
    3. 新版按钮样式兼容
    ============================================ */
 
-/* 新版 LuCI 按钮类名 */
+/* 新版 LuCI 按钮类名。
+   只补形状，不碰配色：颜色由 style.css 按语义类（-edit/-remove/-save…）决定。
+   这里原先带 color/background-color，(0,2,0) 压过 style.css 里 (0,1,0) 的
+   .cbi-button-edit / .cbi-button-remove，把「编辑」「删除」一律刷成 #337ab7。 */
 .btn.cbi-button,
 button.cbi-button {
     -webkit-appearance: none;
     appearance: none;
     text-transform: uppercase;
-    color: #fff;
-    background-color: #337ab7;
     transition: all 0.2s ease-in-out;
     display: inline-block;
     border: none;
@@ -75,6 +76,16 @@ button.cbi-button {
     height: 35px;
     line-height: 35px;
     border-radius: 8px;
+    vertical-align: middle;
+}
+
+/* ComboButton（保存并应用等）同时带 .cbi-dropdown 和 .btn.cbi-button，
+   会被上面的 display:inline-block 压掉弹性布局，标签贴顶、与同排的
+   <button> 基线对不齐。(0,3,0) 拿回 inline-flex 并垂直居中。 */
+.cbi-dropdown.btn.cbi-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* 新版 primary/positive 按钮 */
@@ -156,9 +167,13 @@ button.cbi-button {
     list-style: none;
 }
 
+/* 这里只调内边距，绝对不能写 display。
+   LuCI 靠给选中项加 display 属性、由 style.css 的
+   `.cbi-dropdown > ul > li { display:none }` + `li[display] { display:flex }`
+   来实现"闭合时只露出选中项"。原先这条 display:flex 与那条特异性相同 (0,1,2)
+   又后加载，等于把全部选项平铺出来：时区下拉一次列几百项，
+   ComboButton 也会把「保存并应用」「强制应用」同时显示并顶歪基线。 */
 .cbi-dropdown > ul > li {
-    display: flex;
-    align-items: center;
     padding: 0.5em;
 }
 

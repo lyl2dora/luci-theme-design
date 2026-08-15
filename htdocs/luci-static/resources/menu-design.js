@@ -4,12 +4,31 @@
 
 return baseclass.extend({
 	__init__: function() {
-		ui.menu.load().then(L.bind(this.render, this));
+		// 必须带 catch：菜单加载失败或 render 中途抛异常时，若不收掉那层
+		// z-index:1000 的全屏 loading 遮罩，页面就永远停在白屏上。
+		ui.menu.load()
+			.then(L.bind(this.render, this))
+			.catch(L.bind(function(err) {
+				this.hideLoading();
+				console.error('menu-design:', err);
+			}, this));
+	},
+
+	hideLoading: function() {
+		var loadingEl = document.querySelector('.main > .loading');
+
+		if (loadingEl) {
+			loadingEl.style.opacity = '0';
+			loadingEl.style.visibility = 'hidden';
+		}
 	},
 
 	render: function(tree) {
 		var node = tree,
 		    url = '';
+
+		// 先收遮罩再渲染：渲染过程中任何一步抛异常都不至于把页面锁成白屏
+		this.hideLoading();
 
 		this.renderModeMenu(node);
 
@@ -32,12 +51,6 @@ return baseclass.extend({
 
 		if (darkMask)
 			darkMask.addEventListener('click', ui.createHandlerFn(this, 'handleSidebarToggle'));
-		
-		var loadingEl = document.querySelector(".main > .loading");
-		if (loadingEl) {
-			loadingEl.style.opacity = '0';
-			loadingEl.style.visibility = 'hidden';
-		}
 
 		if (window.innerWidth <= 992) {
 			var mainLeft = document.querySelector('.main-left');
@@ -108,7 +121,10 @@ return baseclass.extend({
 					'href': L.url(url, children[i].name),
 					'click': (l == 1) ? ui.createHandlerFn(this, 'handleMenuExpand') : null,
 					'class': menuClass,
-					'data-title': hasChildren ? children[i].title.replace(" ", "_") : children[i].title.replace(" ", "_"),
+					// style.css 用 [data-title=...] 挂图标，标题里的空格一律换成
+					// 下划线。原先是 replace(" ", "_")，只换第一个空格，三段式
+					// 标题会残留空格，选择器就对不上了。
+					'data-title': children[i].title.replace(/ /g, '_'),
 				}, [_(children[i].title)]),
 				submenu
 			]));
@@ -188,12 +204,17 @@ return baseclass.extend({
 		var width = window.innerWidth,
 		    darkMask = document.querySelector('.darkMask'),
 		    mainRight = document.querySelector('.main-right'),
-		    mainLeft = document.querySelector('.main-left'),
-		    open = mainLeft.style.width == '';
+		    mainLeft = document.querySelector('.main-left');
+
+		// 这个函数也挂在 window 的 resize 上，缺元素时别让它每次缩放都抛异常
+		if (!mainLeft || !darkMask || !mainRight)
+			return;
+
+		var open = mainLeft.style.width == '';
 
 			if (width > 992 || ev.type == 'resize')
 				open = true;
-				
+
 		darkMask.style.visibility = open ? '' : 'visible';
 		darkMask.style.opacity = open ? '': 1;
 
@@ -208,9 +229,16 @@ return baseclass.extend({
 
 		mainRight.style['overflow-y'] = open ? 'auto' : 'visible';
 
-		var header = document.querySelector("header");
+		// open 是切换前的状态，切换后侧栏可见 = 宽屏，或窄屏下由收起变展开。
+		// 原先只看 open，宽屏 resize 时会被强制设成短阴影，把 style.js 刚按
+		// 宽度设好的 17rem 阴影又抹掉，桌面端拖动窗口后阴影就没了。
+		var sidebarVisible = (width > 992) || !open,
+		    header = document.querySelector('header');
+
 		if (header)
-			header.style.boxShadow = open ? "0 2px 4px rgb(0 0 0 / 8%)" : "17rem 2px 4px rgb(0 0 0 / 8%)";
+			header.style.boxShadow = sidebarVisible
+				? '17rem 2px 4px rgb(0 0 0 / 8%)'
+				: '0 2px 4px rgb(0 0 0 / 8%)';
 	},
 });
 
